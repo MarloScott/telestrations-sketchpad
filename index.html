@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Telestrations Sketchpad</title>
+  <meta property="og:image" content="https://bolt.new/static/og_default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+      color: white;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    h1 {
+      font-size: 2em;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      font-size: 1.5em;
+      text-align: center;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .progress {
+      text-align: center;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.2);
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    button {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 18px 30px;
+      font-size: 1.2em;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      margin: 8px 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      min-height: 60px;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      font-size: 1em;
+      padding: 12px 20px;
+      min-height: 45px;
+    }
+
+    button.danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      margin: 10px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    textarea {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.3em;
+      border: none;
+      border-radius: 10px;
+      margin: 10px 0;
+      min-height: 80px;
+      resize: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #setupScreen .options {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    #drawScreen {
+      padding: 10px;
+    }
+
+    #canvas {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      touch-action: none;
+      cursor: crosshair;
+      display: block;
+      width: 100%;
+      max-height: 60vh;
+    }
+
+    .tools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 15px 0;
+      flex-wrap: wrap;
+      background: rgba(255,255,255,0.2);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .tool-group label {
+      font-size: 0.9em;
+      font-weight: bold;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    input[type="color"] {
+      width: 50px;
+      height: 40px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .tool-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tool-buttons button {
+      flex: 1;
+      min-width: 80px;
+      font-size: 0.9em;
+      padding: 12px;
+      min-height: 45px;
+    }
+
+    .tool-buttons button.active {
+      background: #e74c3c;
+    }
+
+    #writeScreen .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    #revealScreen .step-display {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .step-content {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-content img {
+      max-width: 100%;
+      max-height: 50vh;
+      border-radius: 5px;
+    }
+
+    .step-content p {
+      font-size: 1.5em;
+      color: #333;
+      word-wrap: break-word;
+      text-align: center;
+    }
+
+    .navigation {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .navigation button {
+      flex: 1;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .action-buttons button {
+      flex: 1;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      color: #333;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+
+    .modal-content p {
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5em;
+      }
+
+      button {
+        font-size: 1em;
+        padding: 15px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="setupScreen" class="screen active">
+    <h1>🎨 Telestrations Sketchpad</h1>
+    <div class="options">
+      <div>
+        <label for="stepCount" style="display: block; margin-bottom: 10px; font-size: 1.1em;">
+          Number of rounds (or leave at 0 for unlimited):
+        </label>
+        <input type="number" id="stepCount" min="0" max="50" value="0" placeholder="0 = unlimited">
+      </div>
+      <button onclick="startGame()">Start Game</button>
+      <button class="secondary" onclick="loadGame()">Resume Saved Game</button>
+    </div>
+  </div>
+
+  <div id="drawScreen" class="screen">
+    <div class="progress" id="drawProgress"></div>
+    <canvas id="canvas"></canvas>
+    <div class="tools">
+      <div class="tool-group">
+        <label>Size:</label>
+        <input type="range" id="brushSize" min="1" max="30" value="5">
+      </div>
+      <div class="tool-group">
+        <label>Color:</label>
+        <input type="color" id="colorPicker" value="#000000">
+      </div>
+    </div>
+    <div class="tool-buttons">
+      <button id="eraserBtn" onclick="toggleEraser()">Eraser</button>
+      <button onclick="clearCanvas()">Clear</button>
+    </div>
+    <div class="action-buttons">
+      <button class="secondary" onclick="showBackConfirm()">← Back</button>
+      <button onclick="submitDrawing()">Next →</button>
+    </div>
+    <button class="secondary" onclick="showRestartConfirm()" style="margin-top: 10px;">Restart Game</button>
+  </div>
+
+  <div id="writeScreen" class="screen">
+    <div class="progress" id="writeProgress"></div>
+    <div class="content">
+      <h2>What was the previous drawing?</h2>
+      <textarea id="guessInput" placeholder="Type your guess here..." maxlength="200"></textarea>
+      <div class="action-buttons">
+        <button class="secondary" onclick="showBackConfirm()">← Back</button>
+        <button onclick="submitGuess()">Next →</button>
+      </div>
+      <button class="secondary" onclick="showRestartConfirm()" style="margin-top: 10px;">Restart Game</button>
+    </div>
+  </div>
+
+  <div id="revealScreen" class="screen">
+    <h2>The Story</h2>
+    <div class="progress" id="revealProgress"></div>
+    <div class="step-display">
+      <div class="step-content" id="revealContent"></div>
+    </div>
+    <div class="navigation">
+      <button onclick="prevStep()">← Prev</button>
+      <button onclick="nextStep()">Next →</button>
+    </div>
+    <div class="action-buttons" style="margin-top: 20px;">
+      <button class="secondary" onclick="exportJSON()">Download JSON</button>
+      <button class="danger" onclick="resetGame()">New Game</button>
+    </div>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle"></h3>
+      <p id="modalMessage"></p>
+      <div class="modal-buttons">
+        <button class="secondary" onclick="closeModal()">Cancel</button>
+        <button class="danger" id="modalConfirm" onclick="confirmAction()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let gameState = {
+      steps: [],
+      currentStep: 0,
+      maxSteps: 0,
+      revealIndex: 0
+    };
+
+    let isDrawing = false;
+    let currentAction = null;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isErasing = false;
+
+    function initCanvas() {
+      const container = canvas.parentElement;
+      canvas.width = container.clientWidth - 20;
+      canvas.height = Math.min(window.innerHeight * 0.6, 600);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    function startGame() {
+      const stepCount = parseInt(document.getElementById('stepCount').value) || 0;
+      gameState = {
+        steps: [],
+        currentStep: 0,
+        maxSteps: stepCount,
+        revealIndex: 0
+      };
+      saveGame();
+      nextMode();
+    }
+
+    function loadGame() {
+      const saved = localStorage.getItem('telestrations');
+      if (saved) {
+        gameState = JSON.parse(saved);
+        if (gameState.steps.length === 0) {
+          alert('No saved game found!');
+          return;
+        }
+        nextMode();
+      } else {
+        alert('No saved game found!');
+      }
+    }
+
+    function saveGame() {
+      localStorage.setItem('telestrations', JSON.stringify(gameState));
+    }
+
+    function nextMode() {
+      const nextType = gameState.steps.length === 0 ? 'draw' :
+                       (gameState.steps[gameState.steps.length - 1].type === 'draw' ? 'write' : 'draw');
+
+      if (gameState.maxSteps > 0 && gameState.steps.length >= gameState.maxSteps) {
+        showReveal();
+        return;
+      }
+
+      if (nextType === 'draw') {
+        showDrawScreen();
+      } else {
+        showWriteScreen();
+      }
+    }
+
+    function showDrawScreen() {
+      hideAllScreens();
+      document.getElementById('drawScreen').classList.add('active');
+      initCanvas();
+      clearCanvas();
+      updateProgress('draw');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function showWriteScreen() {
+      hideAllScreens();
+      document.getElementById('writeScreen').classList.add('active');
+      document.getElementById('guessInput').value = '';
+      updateProgress('write');
+      document.getElementById('guessInput').focus();
+    }
+
+    function updateProgress(mode) {
+      const stepNum = gameState.steps.length + 1;
+      const maxSteps = gameState.maxSteps > 0 ? ` of ${gameState.maxSteps}` : '';
+      const modeText = mode === 'draw' ? '🎨 DRAW' : '✍️ WRITE';
+      const text = `Step ${stepNum}${maxSteps} - ${modeText}`;
+
+      if (mode === 'draw') {
+        document.getElementById('drawProgress').textContent = text;
+      } else {
+        document.getElementById('writeProgress').textContent = text;
+      }
+    }
+
+    canvas.addEventListener('pointerdown', startDrawing);
+    canvas.addEventListener('pointermove', draw);
+    canvas.addEventListener('pointerup', stopDrawing);
+    canvas.addEventListener('pointerout', stopDrawing);
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const pos = getPointerPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+
+      const pos = getPointerPos(e);
+      const brushSize = document.getElementById('brushSize').value;
+      const color = document.getElementById('colorPicker').value;
+
+      if (isErasing) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = brushSize * 2;
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = brushSize;
+      }
+
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+      ctx.beginPath();
+    }
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function toggleEraser() {
+      isErasing = !isErasing;
+      const btn = document.getElementById('eraserBtn');
+      btn.classList.toggle('active', isErasing);
+      btn.textContent = isErasing ? 'Pen' : 'Eraser';
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function submitDrawing() {
+      const dataURL = canvas.toDataURL('image/png');
+      gameState.steps.push({
+        type: 'draw',
+        data: dataURL
+      });
+      saveGame();
+
+      if (gameState.maxSteps > 0 && gameState.steps.length >= gameState.maxSteps) {
+        showReveal();
+      } else {
+        if (gameState.maxSteps === 0 && gameState.steps.length >= 4) {
+          showFinishOption();
+        } else {
+          nextMode();
+        }
+      }
+    }
+
+    function submitGuess() {
+      const guess = document.getElementById('guessInput').value.trim();
+      if (!guess) {
+        alert('Please enter your guess!');
+        return;
+      }
+
+      gameState.steps.push({
+        type: 'write',
+        data: guess
+      });
+      saveGame();
+
+      if (gameState.maxSteps > 0 && gameState.steps.length >= gameState.maxSteps) {
+        showReveal();
+      } else {
+        if (gameState.maxSteps === 0 && gameState.steps.length >= 4) {
+          showFinishOption();
+        } else {
+          nextMode();
+        }
+      }
+    }
+
+    function showFinishOption() {
+      showModal(
+        'Continue or Finish?',
+        'Do you want to add another round or reveal the story?',
+        'Continue',
+        () => nextMode(),
+        'Reveal',
+        () => showReveal()
+      );
+    }
+
+    function showReveal() {
+      hideAllScreens();
+      document.getElementById('revealScreen').classList.add('active');
+      gameState.revealIndex = 0;
+      displayRevealStep();
+    }
+
+    function displayRevealStep() {
+      const step = gameState.steps[gameState.revealIndex];
+      const content = document.getElementById('revealContent');
+      const progress = document.getElementById('revealProgress');
+
+      progress.textContent = `Step ${gameState.revealIndex + 1} of ${gameState.steps.length}`;
+
+      if (step.type === 'draw') {
+        content.innerHTML = `<img src="${step.data}" alt="Drawing">`;
+      } else {
+        content.innerHTML = `<p>${escapeHtml(step.data)}</p>`;
+      }
+    }
+
+    function prevStep() {
+      if (gameState.revealIndex > 0) {
+        gameState.revealIndex--;
+        displayRevealStep();
+      }
+    }
+
+    function nextStep() {
+      if (gameState.revealIndex < gameState.steps.length - 1) {
+        gameState.revealIndex++;
+        displayRevealStep();
+      }
+    }
+
+    function showBackConfirm() {
+      if (gameState.steps.length === 0) {
+        alert('Nothing to undo!');
+        return;
+      }
+      showModal(
+        'Go Back?',
+        'This will delete the previous step. Are you sure?',
+        'Confirm',
+        () => {
+          gameState.steps.pop();
+          saveGame();
+          if (gameState.steps.length === 0) {
+            hideAllScreens();
+            document.getElementById('setupScreen').classList.add('active');
+          } else {
+            nextMode();
+          }
+        }
+      );
+    }
+
+    function showRestartConfirm() {
+      showModal(
+        'Restart Game?',
+        'This will delete all progress and start over. Are you sure?',
+        'Restart',
+        resetGame
+      );
+    }
+
+    function resetGame() {
+      localStorage.removeItem('telestrations');
+      gameState = {
+        steps: [],
+        currentStep: 0,
+        maxSteps: 0,
+        revealIndex: 0
+      };
+      hideAllScreens();
+      document.getElementById('setupScreen').classList.add('active');
+    }
+
+    function exportJSON() {
+      const dataStr = JSON.stringify(gameState, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `telestrations_${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function showModal(title, message, confirmText, confirmCallback, altText, altCallback) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      const confirmBtn = document.getElementById('modalConfirm');
+      confirmBtn.textContent = confirmText || 'Confirm';
+
+      currentAction = confirmCallback;
+
+      if (altCallback) {
+        const modalButtons = document.querySelector('.modal-buttons');
+        const altBtn = document.createElement('button');
+        altBtn.textContent = altText;
+        altBtn.onclick = () => {
+          altCallback();
+          closeModal();
+        };
+        modalButtons.appendChild(altBtn);
+      }
+
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      const modalButtons = document.querySelector('.modal-buttons');
+      while (modalButtons.children.length > 2) {
+        modalButtons.removeChild(modalButtons.lastChild);
+      }
+    }
+
+    function confirmAction() {
+      if (currentAction) {
+        currentAction();
+        currentAction = null;
+      }
+      closeModal();
+    }
+
+    function hideAllScreens() {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.body.addEventListener('touchmove', (e) => {
+      if (e.target === canvas) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+      if (document.getElementById('drawScreen').classList.contains('active')) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        initCanvas();
+        ctx.putImageData(imageData, 0, 0);
+      }
+    });
+  </script>
+
+</body>
+</html>
